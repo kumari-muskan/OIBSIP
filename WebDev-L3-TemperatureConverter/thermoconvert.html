@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThermoConvert</title>
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --card:#ffffff;
+    --border:#e7eaf2;
+    --text:#0f172a;
+    --muted:#64748b;
+    --blue:#2952e3;
+    --blue-dark:#1d3fc4;
+    --orange:#f2703a;
+    --orange-light:#fef1ea;
+    --purple:#7c3aed;
+    --shadow: 0 10px 30px -12px rgba(15,23,42,0.08);
+    --radius:16px;
+  }
+  [data-theme="dark"]{
+    --bg:#0b1220;
+    --card:#131b2c;
+    --border:#232e45;
+    --text:#eef2ff;
+    --muted:#93a0bd;
+    --orange-light:#241a17;
+    --shadow: 0 10px 30px -12px rgba(0,0,0,0.5);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    transition:background .25s ease, color .25s ease;
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 32px;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+  }
+  .brand{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:700;}
+  .brand .accent{color:var(--blue);}
+  .brand svg{color:var(--blue);}
+  .top-actions{display:flex;align-items:center;gap:16px;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);background:var(--card);color:var(--text);
+    cursor:pointer;
+  }
+  .switch{
+    width:52px;height:28px;border-radius:20px;
+    background:var(--blue);
+    display:flex;align-items:center;padding:3px;cursor:pointer;
+    transition:background .2s;
+  }
+  .switch .dot{
+    width:22px;height:22px;border-radius:50%;background:#fff;
+    transition:transform .2s ease;
+    display:flex;align-items:center;justify-content:center;font-size:12px;
+  }
+  [data-theme="dark"] .switch .dot{transform:translateX(24px);}
+
+  .layout{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    max-width:1500px;
+    margin:0 auto;
+  }
+  .sidebar{padding:24px 16px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;
+    padding:12px 14px;border-radius:12px;
+    color:var(--muted);font-weight:600;cursor:pointer;margin-bottom:6px;
+    font-size:15px;
+    user-select:none;
+  }
+  .nav-item.active{
+    background:var(--orange-light);
+    color:var(--orange);
+  }
+  .nav-item svg{flex-shrink:0;}
+
+  .side-illustration{
+    margin-top:40px;
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+    height:260px;
+  }
+
+  .main{padding:24px 32px 40px;}
+  .grid-top{
+    display:grid;
+    grid-template-columns:1.4fr 1fr;
+    gap:24px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:24px;
+  }
+  .card-title{
+    display:flex;align-items:center;gap:10px;
+    font-weight:700;font-size:17px;margin-bottom:18px;
+  }
+  .card-title svg{color:var(--blue);}
+
+  .input-wrap{
+    display:flex;align-items:center;justify-content:space-between;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px 20px;
+    margin-bottom:22px;
+  }
+  .input-wrap input{
+    border:none;outline:none;background:transparent;
+    font-size:32px;font-weight:700;color:var(--text);width:100%;
+  }
+  .input-wrap input::placeholder{color:#c7cede;}
+  .unit-suffix{font-size:20px;color:var(--muted);font-weight:600;}
+
+  label.section-label{
+    display:block;font-size:14px;color:var(--muted);margin-bottom:10px;font-weight:600;
+  }
+  .pill-row{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px;
+  }
+  .pill{
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:12px 0;
+    text-align:center;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--text);
+    background:var(--card);
+    transition:.15s ease;
+  }
+  .pill.active{
+    background:linear-gradient(135deg,#f2703a,#f0532a);
+    color:#fff;
+    border-color:transparent;
+  }
+  .convert-btn{
+    width:100%;
+    padding:16px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(135deg,var(--blue),var(--blue-dark));
+    color:#fff;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 12px 24px -10px rgba(41,82,227,0.55);
+  }
+  .convert-btn:active{transform:translateY(1px);}
+
+  .result-card{
+    background:linear-gradient(135deg,#e6ecfb,#fbe9df);
+    border:none;
+    position:relative;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  [data-theme="dark"] .result-card{
+    background:linear-gradient(135deg,#1b2340,#33241e);
+  }
+  .result-card h3{margin:0 0 20px;font-size:17px;font-weight:700;}
+  .result-value{font-size:64px;font-weight:800;color:var(--text);line-height:1;}
+  .result-value sup{font-size:32px;font-weight:700;}
+  .result-unit{color:var(--blue);font-weight:700;font-size:20px;margin-top:8px;}
+  .thermo-decor{
+    position:absolute;
+    right:20px;top:50%;
+    transform:translateY(-50%);
+    width:110px;height:280px;
+  }
+
+  .values-card{margin-top:24px;}
+  .values-grid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px;
+  }
+  .value-box{
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 20px;
+  }
+  .value-box .vlabel{color:var(--muted);font-weight:600;font-size:14px;margin-bottom:10px;}
+  .value-box .vnum{
+    display:flex;align-items:baseline;justify-content:space-between;
+    font-size:30px;font-weight:800;margin-bottom:14px;
+  }
+  .value-box .vnum span.u{font-size:16px;color:var(--muted);font-weight:600;}
+  .bar{height:4px;border-radius:4px;}
+  .bar.c{background:#2952e3;}
+  .bar.f{background:linear-gradient(90deg,#f2703a,#f0b23a);}
+  .bar.k{background:#7c3aed;}
+  .c-num{color:#2952e3;}
+  .f-num{color:#f2703a;}
+  .k-num{color:#7c3aed;}
+
+  .info-bar{
+    margin-top:24px;
+    background:linear-gradient(135deg,#dce6fb,#eef2fb);
+    border:none;
+    border-radius:16px;
+    padding:20px 26px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  [data-theme="dark"] .info-bar{background:linear-gradient(135deg,#1a2540,#161f34);}
+  .info-left{display:flex;align-items:center;gap:16px;}
+  .info-icon{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--blue);color:#fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .info-title{font-weight:700;font-size:16px;margin-bottom:2px;}
+  .info-sub{color:var(--muted);font-size:14px;}
+
+  .clear-btn{
+    border:1px solid var(--border);
+    background:var(--card);
+    color:var(--muted);
+    font-weight:600;
+    font-size:13px;
+    padding:8px 14px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .clear-btn:hover{color:#e0453f;border-color:#e0453f;}
+
+  .history-empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--muted);
+  }
+  .history-empty svg{margin-bottom:12px;opacity:.5;}
+
+  .history-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 4px;
+    border-bottom:1px solid var(--border);
+  }
+  .history-item:last-child{border-bottom:none;}
+  .history-convert{
+    display:flex;align-items:center;gap:10px;
+    font-weight:700;font-size:16px;
+  }
+  .history-arrow{color:var(--muted);font-weight:400;}
+  .history-time{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:4px;
+  }
+  .history-from{color:var(--muted);font-weight:600;}
+  .history-to{color:var(--blue);font-weight:700;}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .grid-top{grid-template-columns:1fr;}
+    .values-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+    <span><span class="accent">Thermo</span>Convert</span>
+  </div>
+  <div class="top-actions">
+    <div class="icon-btn" title="History">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <div class="switch" id="themeToggle">
+      <div class="dot">🌙</div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="nav-item active" data-view="converter" id="converterNav">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      Converter
+    </div>
+    <div class="nav-item" data-view="history" id="historyNav">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+      History
+    </div>
+
+    <div class="side-illustration">
+      <svg width="130" height="240" viewBox="0 0 130 240" fill="none">
+        <rect x="52" y="20" width="26" height="150" rx="13" fill="none" stroke="#cbd5e1" stroke-width="3"/>
+        <rect x="58" y="60" width="14" height="110" rx="7" fill="url(#grad1)"/>
+        <circle cx="65" cy="195" r="30" fill="url(#grad1)"/>
+        <circle cx="65" cy="195" r="36" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+        <defs>
+          <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#facc15"/>
+            <stop offset="100%" stop-color="#f2703a"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <div class="main">
+    <div id="converterView">
+    <div class="grid-top">
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+          Enter Temperature
+        </div>
+
+        <div class="input-wrap">
+          <input type="number" id="tempInput" placeholder="0.00" value="0" step="any">
+          <span class="unit-suffix" id="inputUnitLabel">°C</span>
+        </div>
+
+        <label class="section-label">Select Input Unit</label>
+        <div class="pill-row" id="fromRow">
+          <div class="pill active" data-unit="C">Celsius</div>
+          <div class="pill" data-unit="F">Fahrenheit</div>
+          <div class="pill" data-unit="K">Kelvin</div>
+        </div>
+
+        <label class="section-label">Convert To</label>
+        <div class="pill-row" id="toRow">
+          <div class="pill active" data-unit="C">Celsius</div>
+          <div class="pill" data-unit="F">Fahrenheit</div>
+          <div class="pill" data-unit="K">Kelvin</div>
+        </div>
+
+        <button class="convert-btn" id="convertBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+          Convert Now
+        </button>
+      </div>
+
+      <div class="card result-card">
+        <h3>Calculated Result</h3>
+        <div class="result-value" id="resultValue">0<sup>°</sup></div>
+        <div class="result-unit" id="resultUnit">Celsius</div>
+
+        <svg class="thermo-decor" viewBox="0 0 100 260" fill="none">
+          <rect x="38" y="10" width="24" height="150" rx="12" fill="#fff" stroke="#e2e8f0" stroke-width="3"/>
+          <rect x="44" y="50" width="12" height="110" rx="6" fill="url(#grad2)"/>
+          <circle cx="50" cy="185" r="28" fill="url(#grad2)"/>
+          <circle cx="50" cy="185" r="34" fill="#fff" stroke="#e2e8f0" stroke-width="4"/>
+          <defs>
+            <linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#60a5fa"/>
+              <stop offset="100%" stop-color="#2952e3"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+
+    <div class="card values-card">
+      <div class="card-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+        All Temperature Values
+      </div>
+      <div class="values-grid">
+        <div class="value-box">
+          <div class="vlabel">Celsius</div>
+          <div class="vnum"><span class="c-num" id="allC">0°</span><span class="u">°C</span></div>
+          <div class="bar c"></div>
+        </div>
+        <div class="value-box">
+          <div class="vlabel">Fahrenheit</div>
+          <div class="vnum"><span class="f-num" id="allF">32°</span><span class="u">°F</span></div>
+          <div class="bar f"></div>
+        </div>
+        <div class="value-box">
+          <div class="vlabel">Kelvin</div>
+          <div class="vnum"><span class="k-num" id="allK">273.15</span><span class="u">K</span></div>
+          <div class="bar k"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-bar">
+      <div class="info-left">
+        <div class="info-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </div>
+        <div>
+          <div class="info-title">Absolute Zero</div>
+          <div class="info-sub">The lowest possible temperature is -273.15°C (0 K).</div>
+        </div>
+      </div>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#93a0bd" stroke-width="2"><path d="M12 2v20M4.93 4.93l14.14 14.14M19.07 4.93 4.93 19.07M2 12h20M6 6l3 3M18 18l-3-3M18 6l-3 3M6 18l3-3"/></svg>
+    </div>
+    </div>
+
+    <div id="historyView" style="display:none;">
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+            Conversion History
+          </div>
+          <button class="clear-btn" id="clearHistoryBtn">Clear History</button>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tempInput = document.getElementById('tempInput');
+  const fromRow = document.getElementById('fromRow');
+  const toRow = document.getElementById('toRow');
+  const inputUnitLabel = document.getElementById('inputUnitLabel');
+  const resultValue = document.getElementById('resultValue');
+  const resultUnit = document.getElementById('resultUnit');
+  const convertBtn = document.getElementById('convertBtn');
+  const allC = document.getElementById('allC');
+  const allF = document.getElementById('allF');
+  const allK = document.getElementById('allK');
+  const themeToggle = document.getElementById('themeToggle');
+  const converterNav = document.getElementById('converterNav');
+  const historyNav = document.getElementById('historyNav');
+  const converterView = document.getElementById('converterView');
+  const historyView = document.getElementById('historyView');
+  const historyList = document.getElementById('historyList');
+  const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+  const HISTORY_KEY = 'thermoconvert_history';
+
+  function loadHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistoryEntry(entry) {
+    const history = loadHistory();
+    history.unshift(entry);
+    if (history.length > 50) history.length = 50;
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    renderHistory();
+  }
+
+  function clearHistory() {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const history = loadHistory();
+    if (history.length === 0) {
+      historyList.innerHTML = `
+        <div class="history-empty">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          <div>No conversions yet</div>
+        </div>`;
+      return;
+    }
+    historyList.innerHTML = history.map(h => `
+      <div class="history-item">
+        <div>
+          <div class="history-convert">
+            <span class="history-from">${h.fromValue}${unitSymbols[h.fromUnit]}</span>
+            <span class="history-arrow">→</span>
+            <span class="history-to">${h.toValue}${unitSymbols[h.toUnit]}</span>
+          </div>
+          <div class="history-time">${h.time}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function switchView(view) {
+    const isConverter = view === 'converter';
+    converterView.style.display = isConverter ? '' : 'none';
+    historyView.style.display = isConverter ? 'none' : '';
+    converterNav.classList.toggle('active', isConverter);
+    historyNav.classList.toggle('active', !isConverter);
+    if (!isConverter) renderHistory();
+  }
+
+  converterNav.addEventListener('click', () => switchView('converter'));
+  historyNav.addEventListener('click', () => switchView('history'));
+  clearHistoryBtn.addEventListener('click', clearHistory);
+
+  const unitNames = { C: 'Celsius', F: 'Fahrenheit', K: 'Kelvin' };
+  const unitSymbols = { C: '°C', F: '°F', K: 'K' };
+
+  let fromUnit = 'C';
+  let toUnit = 'C';
+
+  function toCelsius(value, unit) {
+    if (unit === 'C') return value;
+    if (unit === 'F') return (value - 32) * 5 / 9;
+    if (unit === 'K') return value - 273.15;
+  }
+
+  function fromCelsius(celsius, unit) {
+    if (unit === 'C') return celsius;
+    if (unit === 'F') return celsius * 9 / 5 + 32;
+    if (unit === 'K') return celsius + 273.15;
+  }
+
+  function formatNum(n) {
+    const rounded = Math.round(n * 100) / 100;
+    return Number.isInteger(rounded) ? rounded.toString() : rounded.toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function setActivePill(row, unit) {
+    [...row.children].forEach(p => {
+      p.classList.toggle('active', p.dataset.unit === unit);
+    });
+  }
+
+  function updateAll() {
+    const raw = parseFloat(tempInput.value);
+    const value = isNaN(raw) ? 0 : raw;
+    const celsius = toCelsius(value, fromUnit);
+
+    allC.textContent = formatNum(fromCelsius(celsius, 'C')) + '°';
+    allF.textContent = formatNum(fromCelsius(celsius, 'F')) + '°';
+    allK.textContent = formatNum(fromCelsius(celsius, 'K'));
+  }
+
+  function convert() {
+    const raw = parseFloat(tempInput.value);
+    const value = isNaN(raw) ? 0 : raw;
+    const celsius = toCelsius(value, fromUnit);
+    const converted = fromCelsius(celsius, toUnit);
+
+    resultValue.innerHTML = formatNum(converted) + '<sup>°</sup>';
+    resultUnit.textContent = unitNames[toUnit];
+    updateAll();
+
+    saveHistoryEntry({
+      fromValue: formatNum(value),
+      fromUnit,
+      toValue: formatNum(converted),
+      toUnit,
+      time: new Date().toLocaleString()
+    });
+  }
+
+  fromRow.addEventListener('click', (e) => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    fromUnit = pill.dataset.unit;
+    setActivePill(fromRow, fromUnit);
+    inputUnitLabel.textContent = unitSymbols[fromUnit];
+    updateAll();
+  });
+
+  toRow.addEventListener('click', (e) => {
+    const pill = e.target.closest('.pill');
+    if (!pill) return;
+    toUnit = pill.dataset.unit;
+    setActivePill(toRow, toUnit);
+    convert();
+  });
+
+  tempInput.addEventListener('input', () => {
+    updateAll();
+  });
+
+  convertBtn.addEventListener('click', convert);
+
+  themeToggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    themeToggle.querySelector('.dot').textContent = isDark ? '☀️' : '🌙';
+  });
+
+  // initial
+  updateAll();
+</script>
+
+</body>
+</html>
